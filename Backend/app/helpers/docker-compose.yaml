@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  argilla-quickstart:
+    image: argilla/argilla-quickstart:latest
+    container_name: quickstart
+    ports:
+      - "4535:6900"
+    networks:
+      - argilla-network
+    restart: unless-stopped
+
+networks:
+  argilla-network:
+    driver: bridge
