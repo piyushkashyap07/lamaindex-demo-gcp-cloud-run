@@ -114,6 +114,7 @@ REPORT_PROMPT = """
 You are tasked with generating a concise, professional business report for TelevisaUnivision stakeholders regarding a potential advertiser. Today's date is {today}.
 
 You will be provided with the following information from an Advertiser Opportunity Analyzer:
+- Company Name: {company_name}
 - Propensity Score: {propensity_score}
 - Rationale: {rationale}
 - Strategic Recommendations: {strategic_recommendations} (This will be a list of strings)
@@ -122,7 +123,7 @@ Your report must be a maximum of 300 words and adhere to the following structure
 
 ---
 
-Business Report: [Company Name] Advertiser Opportunity Analysis
+Business Report: {company_name} Advertiser Opportunity Analysis
 
 1. Executive Summary
 Provide a brief, high-level summary of the company's advertising propensity, including the assigned score (1-10) and what it signifies (e.g., "The company has been assigned a propensity score of X, indicating [brief interpretation].").
@@ -142,6 +143,141 @@ Keep the language professional, direct, and actionable for a business audience. 
 """
 
 class NewStockWorkflow(Workflow):
+    def _extract_company_name(self, user_query: str) -> str:
+        """
+        Extract and normalize company name from user query.
+        Maps common variations to proper company names.
+        """
+        query_lower = user_query.lower().strip()
+        
+        # Company name mappings
+        company_mappings = {
+            'youtube': 'YouTube (Google)',
+            'google': 'Google (Alphabet Inc.)',
+            'alphabet': 'Alphabet Inc.',
+            'meta': 'Meta Platforms Inc.',
+            'facebook': 'Meta Platforms Inc.',
+            'apple': 'Apple Inc.',
+            'microsoft': 'Microsoft Corporation',
+            'amazon': 'Amazon.com Inc.',
+            'tesla': 'Tesla Inc.',
+            'nvidia': 'NVIDIA Corporation',
+            'netflix': 'Netflix Inc.',
+            'spotify': 'Spotify Technology S.A.',
+            'uber': 'Uber Technologies Inc.',
+            'airbnb': 'Airbnb Inc.',
+            'twitter': 'X (formerly Twitter)',
+            'x': 'X (formerly Twitter)',
+            'tiktok': 'TikTok (ByteDance)',
+            'bytedance': 'ByteDance Ltd.',
+            'snapchat': 'Snap Inc.',
+            'snap': 'Snap Inc.',
+            'pinterest': 'Pinterest Inc.',
+            'linkedin': 'LinkedIn (Microsoft)',
+            'salesforce': 'Salesforce Inc.',
+            'oracle': 'Oracle Corporation',
+            'ibm': 'IBM Corporation',
+            'intel': 'Intel Corporation',
+            'amd': 'Advanced Micro Devices Inc.',
+            'qualcomm': 'Qualcomm Inc.',
+            'cisco': 'Cisco Systems Inc.',
+            'adobe': 'Adobe Inc.',
+            'paypal': 'PayPal Holdings Inc.',
+            'square': 'Block Inc.',
+            'stripe': 'Stripe Inc.',
+            'zoom': 'Zoom Video Communications Inc.',
+            'slack': 'Slack Technologies Inc.',
+            'dropbox': 'Dropbox Inc.',
+            'box': 'Box Inc.',
+            'atlassian': 'Atlassian Corporation',
+            'servicenow': 'ServiceNow Inc.',
+            'workday': 'Workday Inc.',
+            'snowflake': 'Snowflake Inc.',
+            'databricks': 'Databricks Inc.',
+            'palantir': 'Palantir Technologies Inc.',
+            'crowdstrike': 'CrowdStrike Holdings Inc.',
+            'okta': 'Okta Inc.',
+            'zendesk': 'Zendesk Inc.',
+            'shopify': 'Shopify Inc.',
+            'square': 'Block Inc.',
+            'roku': 'Roku Inc.',
+            'peloton': 'Peloton Interactive Inc.',
+            'zoom': 'Zoom Video Communications Inc.',
+            'docu': 'DocuSign Inc.',
+            'docusign': 'DocuSign Inc.',
+            'twilio': 'Twilio Inc.',
+            'sendgrid': 'Twilio Inc.',
+            'mailchimp': 'Mailchimp (Intuit)',
+            'hubspot': 'HubSpot Inc.',
+            'salesforce': 'Salesforce Inc.',
+            'monday': 'Monday.com Ltd.',
+            'asana': 'Asana Inc.',
+            'trello': 'Atlassian Corporation',
+            'notion': 'Notion Labs Inc.',
+            'airtable': 'Airtable Inc.',
+            'figma': 'Figma Inc.',
+            'canva': 'Canva Pty Ltd.',
+            'grammarly': 'Grammarly Inc.',
+            'lastpass': 'LogMeIn Inc.',
+            '1password': '1Password Inc.',
+            'dashlane': 'Dashlane Inc.',
+            'bitwarden': 'Bitwarden Inc.',
+            'expressvpn': 'ExpressVPN (Kape Technologies)',
+            'nordvpn': 'NordVPN (Nord Security)',
+            'surfshark': 'Surfshark (Nord Security)',
+            'proton': 'Proton AG',
+            'protonmail': 'Proton AG',
+            'protonvpn': 'Proton AG',
+            'tutanota': 'Tutanota GmbH',
+            'signal': 'Signal Foundation',
+            'telegram': 'Telegram FZ-LLC',
+            'whatsapp': 'WhatsApp (Meta)',
+            'discord': 'Discord Inc.',
+            'teams': 'Microsoft Teams (Microsoft)',
+            'zoom': 'Zoom Video Communications Inc.',
+            'webex': 'Webex (Cisco)',
+            'gotomeeting': 'GoTo Meeting (LogMeIn)',
+            'bluejeans': 'BlueJeans (Verizon)',
+            'jitsi': 'Jitsi (8x8)',
+            'whereby': 'Whereby (Videxio AS)',
+            'calendly': 'Calendly Inc.',
+            'acuity': 'Acuity Scheduling Inc.',
+            'doodle': 'Doodle AG',
+            'when2meet': 'When2meet Inc.',
+            'calendly': 'Calendly Inc.',
+            'scheduleonce': 'ScheduleOnce Inc.',
+            'appointy': 'Appointy Inc.',
+            'simplybook': 'SimplyBook.me Ltd.',
+            'bookly': 'Bookly Inc.',
+            'picktime': 'Picktime Inc.',
+            'reservio': 'Reservio Inc.',
+            'bookingbug': 'BookingBug Ltd.',
+            'acuity': 'Acuity Scheduling Inc.',
+            'calendly': 'Calendly Inc.',
+            'doodle': 'Doodle AG',
+            'when2meet': 'When2meet Inc.',
+            'calendly': 'Calendly Inc.',
+            'scheduleonce': 'ScheduleOnce Inc.',
+            'appointy': 'Appointy Inc.',
+            'simplybook': 'SimplyBook.me Ltd.',
+            'bookly': 'Bookly Inc.',
+            'picktime': 'Picktime Inc.',
+            'reservio': 'Reservio Inc.',
+            'bookingbug': 'BookingBug Ltd.'
+        }
+        
+        # Check for exact matches first
+        if query_lower in company_mappings:
+            return company_mappings[query_lower]
+        
+        # Check for partial matches
+        for key, value in company_mappings.items():
+            if key in query_lower or query_lower in key:
+                return value
+        
+        # If no match found, capitalize and return the original query
+        return user_query.strip().title()
+    
     @step(pass_context=True)
     async def trigger_new_stock(self, ctx: Context, ev: StartEvent) -> MarketingSignalEvent | LeadershipChangeEvent | CompetitorAdSpendEvent | ThreeMonthReportEvent:
         """
@@ -290,7 +426,12 @@ class NewStockWorkflow(Workflow):
         Uses Gemini LLM for report formatting.
         """
         today = datetime.now().strftime('%B %d, %Y')
+        
+        # Extract company name from user query
+        company_name = self._extract_company_name(ev.user_query)
+        
         prompt = REPORT_PROMPT.format(
+            company_name=company_name,
             propensity_score=ev.propensity_score,
             rationale=ev.rationale,
             strategic_recommendations=getattr(ev, 'strategic_recommendations', ''),

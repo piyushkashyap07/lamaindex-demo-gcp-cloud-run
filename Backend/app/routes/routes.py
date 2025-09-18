@@ -23,6 +23,135 @@ from fastapi import APIRouter
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+def _extract_company_name_from_response(response_text: str, user_message: str) -> str:
+    """
+    Extract company name from response text or user message.
+    Maps common variations to proper company names.
+    """
+    # Company name mappings
+    company_mappings = {
+        'youtube': 'YouTube (Google)',
+        'google': 'Google (Alphabet Inc.)',
+        'alphabet': 'Alphabet Inc.',
+        'meta': 'Meta Platforms Inc.',
+        'facebook': 'Meta Platforms Inc.',
+        'apple': 'Apple Inc.',
+        'microsoft': 'Microsoft Corporation',
+        'amazon': 'Amazon.com Inc.',
+        'tesla': 'Tesla Inc.',
+        'nvidia': 'NVIDIA Corporation',
+        'netflix': 'Netflix Inc.',
+        'spotify': 'Spotify Technology S.A.',
+        'uber': 'Uber Technologies Inc.',
+        'airbnb': 'Airbnb Inc.',
+        'twitter': 'X (formerly Twitter)',
+        'x': 'X (formerly Twitter)',
+        'tiktok': 'TikTok (ByteDance)',
+        'bytedance': 'ByteDance Ltd.',
+        'snapchat': 'Snap Inc.',
+        'snap': 'Snap Inc.',
+        'pinterest': 'Pinterest Inc.',
+        'linkedin': 'LinkedIn (Microsoft)',
+        'salesforce': 'Salesforce Inc.',
+        'oracle': 'Oracle Corporation',
+        'ibm': 'IBM Corporation',
+        'intel': 'Intel Corporation',
+        'amd': 'Advanced Micro Devices Inc.',
+        'qualcomm': 'Qualcomm Inc.',
+        'cisco': 'Cisco Systems Inc.',
+        'adobe': 'Adobe Inc.',
+        'paypal': 'PayPal Holdings Inc.',
+        'square': 'Block Inc.',
+        'stripe': 'Stripe Inc.',
+        'zoom': 'Zoom Video Communications Inc.',
+        'slack': 'Slack Technologies Inc.',
+        'dropbox': 'Dropbox Inc.',
+        'box': 'Box Inc.',
+        'atlassian': 'Atlassian Corporation',
+        'servicenow': 'ServiceNow Inc.',
+        'workday': 'Workday Inc.',
+        'snowflake': 'Snowflake Inc.',
+        'databricks': 'Databricks Inc.',
+        'palantir': 'Palantir Technologies Inc.',
+        'crowdstrike': 'CrowdStrike Holdings Inc.',
+        'okta': 'Okta Inc.',
+        'zendesk': 'Zendesk Inc.',
+        'shopify': 'Shopify Inc.',
+        'roku': 'Roku Inc.',
+        'peloton': 'Peloton Interactive Inc.',
+        'docu': 'DocuSign Inc.',
+        'docusign': 'DocuSign Inc.',
+        'twilio': 'Twilio Inc.',
+        'sendgrid': 'Twilio Inc.',
+        'mailchimp': 'Mailchimp (Intuit)',
+        'hubspot': 'HubSpot Inc.',
+        'monday': 'Monday.com Ltd.',
+        'asana': 'Asana Inc.',
+        'trello': 'Atlassian Corporation',
+        'notion': 'Notion Labs Inc.',
+        'airtable': 'Airtable Inc.',
+        'figma': 'Figma Inc.',
+        'canva': 'Canva Pty Ltd.',
+        'grammarly': 'Grammarly Inc.',
+        'lastpass': 'LogMeIn Inc.',
+        '1password': '1Password Inc.',
+        'dashlane': 'Dashlane Inc.',
+        'bitwarden': 'Bitwarden Inc.',
+        'expressvpn': 'ExpressVPN (Kape Technologies)',
+        'nordvpn': 'NordVPN (Nord Security)',
+        'surfshark': 'Surfshark (Nord Security)',
+        'proton': 'Proton AG',
+        'protonmail': 'Proton AG',
+        'protonvpn': 'Proton AG',
+        'tutanota': 'Tutanota GmbH',
+        'signal': 'Signal Foundation',
+        'telegram': 'Telegram FZ-LLC',
+        'whatsapp': 'WhatsApp (Meta)',
+        'discord': 'Discord Inc.',
+        'teams': 'Microsoft Teams (Microsoft)',
+        'webex': 'Webex (Cisco)',
+        'gotomeeting': 'GoTo Meeting (LogMeIn)',
+        'bluejeans': 'BlueJeans (Verizon)',
+        'jitsi': 'Jitsi (8x8)',
+        'whereby': 'Whereby (Videxio AS)',
+        'calendly': 'Calendly Inc.',
+        'acuity': 'Acuity Scheduling Inc.',
+        'doodle': 'Doodle AG',
+        'when2meet': 'When2meet Inc.',
+        'scheduleonce': 'ScheduleOnce Inc.',
+        'appointy': 'Appointy Inc.',
+        'simplybook': 'SimplyBook.me Ltd.',
+        'bookly': 'Bookly Inc.',
+        'picktime': 'Picktime Inc.',
+        'reservio': 'Reservio Inc.',
+        'bookingbug': 'BookingBug Ltd.',
+        'infosys': 'Infosys Limited',
+        'tcs': 'Tata Consultancy Services',
+        'wipro': 'Wipro Limited',
+        'hcl': 'HCL Technologies',
+        'cognizant': 'Cognizant Technology Solutions',
+        'accenture': 'Accenture plc',
+        'capgemini': 'Capgemini SE',
+        'deloitte': 'Deloitte Touche Tohmatsu Limited',
+        'pwc': 'PricewaterhouseCoopers',
+        'kpmg': 'KPMG International',
+        'ey': 'Ernst & Young',
+        'sap': 'SAP SE'
+    }
+    
+    # Check user message first
+    user_lower = user_message.lower().strip()
+    if user_lower in company_mappings:
+        return company_mappings[user_lower]
+    
+    # Check for partial matches in user message
+    for key, value in company_mappings.items():
+        if key in user_lower or user_lower in key:
+            return value
+    
+    # If no match found, capitalize and return the original user message
+    return user_message.strip().title()
+
 
 @router.get("/server-check")
 def health_check():
@@ -140,13 +269,7 @@ async def send_message_sync(message_data: MessageCreate):
                     visual_indicator = "🔴 Low"
 
                 # Extract company name from the response
-                company_name = "Meta Platforms Inc."
-                if "Meta" in actual_response:
-                    company_name = "Meta Platforms Inc."
-                elif "Peloton" in actual_response:
-                    company_name = "Peloton Interactive, Inc."
-                else:
-                    company_name = "Company Analysis"
+                company_name = _extract_company_name_from_response(actual_response, message_data.user_message)
 
                 return CleanBusinessReportResponse(
                     company_name=company_name,
