@@ -45,9 +45,9 @@ COPY Frontend/ /var/www/html/
 # Create necessary directories
 RUN mkdir -p logs /var/log/supervisor /var/log/nginx
 
-# Configure nginx
+# Configure nginx to listen on port 8080
 RUN echo 'server {' > /etc/nginx/sites-available/default && \
-    echo '    listen 80;' >> /etc/nginx/sites-available/default && \
+    echo '    listen 8080;' >> /etc/nginx/sites-available/default && \
     echo '    server_name localhost;' >> /etc/nginx/sites-available/default && \
     echo '    root /var/www/html;' >> /etc/nginx/sites-available/default && \
     echo '    index index.html;' >> /etc/nginx/sites-available/default && \
@@ -96,8 +96,8 @@ RUN echo '[supervisord]' > /etc/supervisor/conf.d/supervisord.conf && \
     echo 'stderr_logfile=/var/log/supervisor/fastapi_error.log' >> /etc/supervisor/conf.d/supervisord.conf && \
     echo 'stdout_logfile=/var/log/supervisor/fastapi_access.log' >> /etc/supervisor/conf.d/supervisord.conf
 
-# Expose port 80
-EXPOSE 80
+# Expose port 8080
+EXPOSE 8080
 
 # Start supervisor to manage both nginx and FastAPI
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

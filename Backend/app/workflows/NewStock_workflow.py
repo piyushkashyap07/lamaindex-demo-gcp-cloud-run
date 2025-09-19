@@ -32,7 +32,8 @@ PHOENIX_PROJECT_NAME = os.getenv("PHOENIX_PROJECT_NAME")
 tracer_provider = register(
     endpoint=OTEL_ENDPOINT,
     project_name=PHOENIX_PROJECT_NAME,
-    auto_instrument=True
+    auto_instrument=True,
+    batch=True
 )
 
 # Log tracing configuration details
