@@ -1,5 +1,5 @@
-import asyncio
 import os
+import asyncio
 import json
 import time
 from typing import Any, Dict, List, Tuple, Optional
@@ -14,10 +14,41 @@ from app.prompts.competitor_ad_spend_prompt import COMPETITOR_AD_SPEND_PROMPT
 from app.prompts.three_month_report_prompt import THREE_MONTH_REPORT_PROMPT
 from datetime import datetime
 import logging
+from phoenix.otel import register
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 
+# Load environment variables
+dotenv.load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-dotenv.load_dotenv()
+# Get OpenTelemetry configuration from environment variables
+OTEL_ENDPOINT = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+PHOENIX_PROJECT_NAME = os.getenv("PHOENIX_PROJECT_NAME")
+
+# Register Phoenix tracer
+tracer_provider = register(
+    endpoint=OTEL_ENDPOINT,
+    project_name=PHOENIX_PROJECT_NAME,
+    auto_instrument=True
+)
+
+# Log tracing configuration details
+logger.info("OpenTelemetry Tracing Details")
+logger.info(f"|  Phoenix Project: {PHOENIX_PROJECT_NAME}")
+logger.info(f"|  Collector Endpoint: {OTEL_ENDPOINT}")
+logger.info("|  Transport: HTTP + protobuf")
+logger.info("|")
+
+# Instrument LlamaIndex with error handling for already instrumented case
+try:
+    LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
+    logger.info("Phoenix tracing enabled and LlamaIndex instrumented")
+except Exception as e:
+    # Already instrumented, continue
+    logger.info(f"LlamaIndex already instrumented: {e}")
 
 # Event stubs (now match app.models.event style)
 class MarketingSignalEvent(Event):
@@ -517,5 +548,4 @@ async def run_new_stock_workflow(user_query: str, user_id: str, message_id: str)
             "score_category": "Error",
             "visual_indicator": "🔴 Error"
         }
-        return type('Handler', (), {'result': fallback_result})() 
-    
+        return type('Handler', (), {'result': fallback_result})()

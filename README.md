@@ -1,12 +1,14 @@
-# Propensity Score Analysis - Full Stack Application
+# Propensity Score Analysis - Full Stack Application with Phoenix Tracing
 
-A complete web application for analyzing company propensity scores using AI-powered multi-agent workflows. This application combines a FastAPI backend with a modern HTML/CSS/JavaScript frontend, all containerized for easy deployment.
+A complete web application for analyzing company propensity scores using AI-powered multi-agent workflows. This application combines a FastAPI backend with a modern HTML/CSS/JavaScript frontend, all containerized for easy deployment with Phoenix tracing for observability.
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Docker and Docker Compose
+- Docker
+- Google Cloud CLI (for deployment)
 - API Keys (see Environment Variables section)
+- Phoenix service deployed to Google Cloud Run
 
 ### 1. Clone and Setup
 ```bash
@@ -86,6 +88,40 @@ google-cloud-run-demo/
 └── README.md                    # This file
 ```
 
+## 🔍 Phoenix Tracing
+
+This application includes enhanced Phoenix tracing for observability of your LlamaIndex workflow agents:
+
+- **Phoenix Service**: Deployed to Google Cloud Run at `https://phoenix-service-538068578089.europe-west4.run.app`
+- **OpenInference Integration**: Uses `openinference-instrumentation-llama-index` for comprehensive tracing
+- **Automatic Tracing**: All workflow agents are automatically traced with detailed spans
+- **Real-time Monitoring**: View traces, performance metrics, and errors
+- **Cost Tracking**: Monitor LLM token usage and costs
+- **Enhanced Observability**: Better visibility into LlamaIndex operations and agent interactions
+
+### Tracing Setup
+The application uses the latest Phoenix tracing configuration:
+```python
+from phoenix.otel import register
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+
+# Register Phoenix tracer
+tracer_provider = register(
+    endpoint=OTEL_ENDPOINT,
+    project_name=PHOENIX_PROJECT_NAME,
+    auto_instrument=True
+)
+
+# Instrument LlamaIndex
+LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
+```
+
+### Viewing Traces
+1. Run an analysis on your application
+2. Open Phoenix UI: https://phoenix-service-538068578089.europe-west4.run.app
+3. See complete workflow execution paths and agent performance
+4. Monitor detailed LlamaIndex operations and LLM calls
+
 ## 🔧 Environment Variables
 
 ### Required API Keys
@@ -118,6 +154,11 @@ MONGODB_RAG_DB=your_mongodb_rag_database_name
 # Argilla for feedback collection
 ARGILLA_API_URL=http://localhost:4535
 ARGILLA_API_KEY=your_argilla_api_key_here
+
+# Phoenix Tracing Configuration
+PHOENIX_ENABLED=true
+PHOENIX_COLLECTOR_ENDPOINT=https://phoenix-service-538068578089.europe-west4.run.app
+PHOENIX_PROJECT_NAME=propensity-analysis
 ```
 
 ## 🌐 API Endpoints
@@ -254,6 +295,10 @@ curl http://localhost/server-check
 
 # Test frontend
 open http://localhost
+
+# Test workflow with tracing
+cd Backend
+python test_workflow.py
 ```
 
 ## 📊 Monitoring and Logs
@@ -287,7 +332,38 @@ open http://localhost
 
 ## 🚀 Production Deployment
 
-### Google Cloud Run
+### Google Cloud Run (Recommended)
+
+#### Quick Deployment
+```bash
+# Use the deployment script (Linux/Mac)
+./deploy.sh
+
+# Or use the Windows batch file
+deploy.bat
+```
+
+#### Manual Deployment
+```bash
+gcloud run deploy propensity-analysis-app \
+  --source . \
+  --platform managed \
+  --region europe-west4 \
+  --allow-unauthenticated \
+  --port 80 \
+  --memory 2Gi \
+  --cpu 2 \
+  --timeout 300 \
+  --set-env-vars="
+    PHOENIX_ENABLED=true,
+    PHOENIX_COLLECTOR_ENDPOINT=https://phoenix-service-538068578089.europe-west4.run.app,
+    PHOENIX_PROJECT_NAME=propensity-analysis,
+    OPENAI_API_KEY=your_key,
+    TAVILY_API_KEY=your_key
+  "
+```
+
+### Local Development
 1. Build and push Docker image to GCR
 2. Deploy with proper environment variables
 3. Configure custom domain (optional)

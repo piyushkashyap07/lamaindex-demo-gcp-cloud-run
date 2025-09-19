@@ -1,4 +1,5 @@
-# Multi-stage Dockerfile for Frontend + Backend
+# Multi-stage Dockerfile for Frontend + Backend with Phoenix Tracing
+# Phoenix service is deployed separately to Google Cloud Run
 FROM python:3.11-slim as backend
 
 # Set working directory
