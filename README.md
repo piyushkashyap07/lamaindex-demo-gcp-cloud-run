@@ -1,6 +1,10 @@
-# Propensity Score Analysis - Full Stack Application with Phoenix Tracing
+# Propensity Score Analysis Platform - Full Stack Application
 
-A complete web application for analyzing company propensity scores using AI-powered multi-agent workflows. This application combines a FastAPI backend with a modern HTML/CSS/JavaScript frontend, all containerized for easy deployment with Phoenix tracing for observability.
+A complete AI-powered web application for analyzing company propensity scores using multi-agent workflows. This application combines a FastAPI backend with a modern HTML/CSS/JavaScript frontend, deployed on Google Cloud Run with Phoenix tracing for observability.
+
+## 🌐 Live Application
+
+- **Frontend**: [https://propensity-analysis-frontend-538068578089.europe-west4.run.app](https://propensity-analysis-frontend-538068578089.europe-west4.run.app)
 
 ## 🚀 Quick Start
 
@@ -25,24 +29,52 @@ cp env.example .env
 nano .env
 ```
 
-### 3. Deploy with Docker
+### 3. Local Development
 ```bash
-# Build and run the application
-docker-compose up --build
+# Backend
+cd Backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
 
-# Or run in detached mode
-docker-compose up -d --build
+# Frontend (in another terminal)
+cd Frontend
+python -m http.server 8000
+# Access at http://localhost:8000
 ```
 
 ### 4. Access the Application
-- **Frontend**: http://localhost
-- **API Documentation**: http://localhost/docs
-- **Health Check**: http://localhost/server-check
+- **Frontend**: http://localhost:8000
+- **API Documentation**: http://localhost:8080/docs
+- **Health Check**: http://localhost:8080/server-check
 
 ## 🏗️ Architecture
 
+### System Overview
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Backend       │    │   Monitoring    │
+│   (Cloud Run)   │◄──►│   (Cloud Run)   │◄──►│   (Phoenix)     │
+│                 │    │                 │    │                 │
+│ • HTML/CSS/JS   │    │ • FastAPI       │    │ • Tracing       │
+│ • Responsive    │    │ • LlamaIndex    │    │ • Metrics       │
+│ • Real-time     │    │ • Multi-agent   │    │ • Logs          │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │
+                                ▼
+                       ┌─────────────────┐
+                       │   Data Layer    │
+                       │                 │
+                       │ • MongoDB       │
+                       │ • Pinecone      │
+                       │ • Tavily API    │
+                       └─────────────────┘
+```
+
 ### Frontend (HTML/CSS/JavaScript)
 - **Location**: `Frontend/`
+- **Deployment**: Google Cloud Run
 - **Features**:
   - Modern responsive design
   - Real-time API interactions
@@ -52,16 +84,20 @@ docker-compose up -d --build
 
 ### Backend (FastAPI)
 - **Location**: `Backend/`
+- **Deployment**: Google Cloud Run
 - **Features**:
   - Multi-agent AI workflow
   - MongoDB integration
   - Vector search capabilities
   - Comprehensive API endpoints
 
-### Unified Deployment
-- **Nginx**: Serves frontend and proxies API requests
-- **Supervisor**: Manages both Nginx and FastAPI processes
-- **Single Container**: Complete application in one Docker image
+### Monitoring (Phoenix)
+- **Location**: Google Cloud Run
+- **Features**:
+  - LlamaIndex workflow tracing
+  - Performance metrics
+  - Error tracking
+  - Cost monitoring
 
 ## 📁 Project Structure
 
@@ -70,7 +106,10 @@ google-cloud-run-demo/
 ├── Frontend/                    # Frontend application
 │   ├── index.html              # Main HTML file
 │   ├── styles.css              # CSS styling
-│   └── script.js               # JavaScript functionality
+│   ├── script.js               # JavaScript functionality
+│   ├── Dockerfile              # Frontend Docker config
+│   ├── .dockerignore           # Docker ignore file
+│   └── README.md               # Frontend documentation
 ├── Backend/                     # Backend application
 │   ├── app/                     # FastAPI application
 │   │   ├── controllers/         # API controllers
@@ -81,10 +120,9 @@ google-cloud-run-demo/
 │   │   └── workflows/           # Multi-agent workflows
 │   ├── main.py                  # Application entry point
 │   ├── requirements.txt         # Python dependencies
-│   └── Dockerfile               # Backend Docker config
-├── Dockerfile                   # Unified deployment Dockerfile
-├── docker-compose.yml           # Docker Compose configuration
-├── env.example                  # Environment variables template
+│   ├── Dockerfile               # Backend Docker config
+│   └── README.md                # Backend documentation
+├── venv/                        # Python virtual environment
 └── README.md                    # This file
 ```
 
@@ -92,7 +130,7 @@ google-cloud-run-demo/
 
 This application includes enhanced Phoenix tracing for observability of your LlamaIndex workflow agents:
 
-- **Phoenix Service**: Deployed to Google Cloud Run at `https://phoenix-service-538068578089.europe-west4.run.app`
+- **Phoenix Service**: Deployed to Google Cloud Run
 - **OpenInference Integration**: Uses `openinference-instrumentation-llama-index` for comprehensive tracing
 - **Automatic Tracing**: All workflow agents are automatically traced with detailed spans
 - **Real-time Monitoring**: View traces, performance metrics, and errors
@@ -118,7 +156,7 @@ LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
 
 ### Viewing Traces
 1. Run an analysis on your application
-2. Open Phoenix UI: https://phoenix-service-538068578089.europe-west4.run.app
+2. Open Phoenix UI
 3. See complete workflow execution paths and agent performance
 4. Monitor detailed LlamaIndex operations and LLM calls
 
@@ -126,8 +164,6 @@ LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
 
 ### Required API Keys
 ```bash
-# Google API Key for Gemini LLM
-GOOGLE_API_KEY=your_google_api_key_here
 
 # Tavily API Key for web search
 TAVILY_API_KEY=your_tavily_api_key_here
@@ -135,8 +171,6 @@ TAVILY_API_KEY=your_tavily_api_key_here
 # OpenAI API Key for GPT-4o-mini and embeddings
 OPENAI_API_KEY=your_openai_api_key_here
 
-# Pinecone API Key for vector database
-PINECONE_API_KEY=your_pinecone_api_key_here
 ```
 
 ### Database Configuration
@@ -151,13 +185,10 @@ MONGODB_RAG_DB=your_mongodb_rag_database_name
 
 ### Optional Services
 ```bash
-# Argilla for feedback collection
-ARGILLA_API_URL=http://localhost:4535
-ARGILLA_API_KEY=your_argilla_api_key_here
 
 # Phoenix Tracing Configuration
 PHOENIX_ENABLED=true
-PHOENIX_COLLECTOR_ENDPOINT=https://phoenix-service-538068578089.europe-west4.run.app
+PHOENIX_COLLECTOR_ENDPOINT=https://phoenix-538068578089.us-central1.run.app
 PHOENIX_PROJECT_NAME=propensity-analysis
 ```
 
@@ -194,57 +225,40 @@ The frontend automatically handles:
 ### 3. API Integration
 ```bash
 # Create conversation
-curl -X POST "http://localhost/" \
+curl -X POST "" \
      -H "Content-Type: application/json" \
      -d '{"email": "user@example.com"}'
 
 # Analyze company
-curl -X POST "http://localhost/message-sync" \
+curl -X POST "" \
      -H "Content-Type: application/json" \
      -d '{"conversation_id": "conversation_id", "user_message": "Analyze Meta"}'
 ```
 
 ## 🐳 Docker Deployment Options
 
-### Option 1: Docker Compose (Recommended)
+### Option 1: Local Development
 ```bash
-# Full stack with all services
-docker-compose up --build
+# Backend
+cd Backend
+docker build -t propensity-analysis-backend .
+docker run -p 8080:8080 propensity-analysis-backend
 
-# With local MongoDB
-docker-compose --profile local-db up --build
-
-# With Argilla feedback collection
-docker-compose --profile argilla up --build
+# Frontend
+cd Frontend
+docker build -t propensity-analysis-frontend .
+docker run -p 8000:8080 propensity-analysis-frontend
 ```
 
-### Option 2: Docker Build
+### Option 2: Google Cloud Run (Production)
 ```bash
-# Build the unified image
-docker build -t propensity-analysis-app .
+# Backend deployment
+gcloud builds submit --tag europe-west4-docker.pkg.dev/lamaindex-demo/lama-demo/lamaimg:lamatag ./Backend
+gcloud run deploy lamaimg --image europe-west4-docker.pkg.dev/lamaindex-demo/lama-demo/lamaimg:lamatag --platform managed --region europe-west4 --allow-unauthenticated --port 8080
 
-# Run the container
-docker run -p 80:80 \
-  -e GOOGLE_API_KEY=your_key \
-  -e TAVILY_API_KEY=your_key \
-  -e OPENAI_API_KEY=your_key \
-  -e PINECONE_API_KEY=your_key \
-  propensity-analysis-app
-```
-
-### Option 3: Google Cloud Run
-```bash
-# Build and push to Google Container Registry
-docker build -t gcr.io/PROJECT_ID/propensity-analysis-app .
-docker push gcr.io/PROJECT_ID/propensity-analysis-app
-
-# Deploy to Cloud Run
-gcloud run deploy propensity-analysis-app \
-  --image gcr.io/PROJECT_ID/propensity-analysis-app \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --port 80
+# Frontend deployment
+gcloud builds submit --tag europe-west4-docker.pkg.dev/lamaindex-demo/lama-demo-frontend/frontend:latest ./Frontend
+gcloud run deploy propensity-analysis-frontend --image europe-west4-docker.pkg.dev/lamaindex-demo/lama-demo-frontend/frontend:latest --platform managed --region europe-west4 --allow-unauthenticated --port 8080
 ```
 
 ## 🔍 Features
@@ -291,10 +305,10 @@ python -m http.server 8000
 ### Testing
 ```bash
 # Test API endpoints
-curl http://localhost/server-check
+curl http://localhost:8080/server-check
 
 # Test frontend
-open http://localhost
+open http://localhost:8000
 
 # Test workflow with tracing
 cd Backend
@@ -309,9 +323,10 @@ python test_workflow.py
 - **Nginx Logs**: `/var/log/nginx/*.log`
 
 ### Health Monitoring
-- **Health Check**: `GET /server-check`
+- **Backend Health Check**: `GET /server-check`
+- **Frontend Health Check**: `GET /health`
 - **Status**: Returns server status and timestamp
-- **Monitoring**: Built-in health check endpoint
+- **Monitoring**: Built-in health check endpoints
 
 ## 🔒 Security Considerations
 
@@ -345,29 +360,42 @@ deploy.bat
 
 #### Manual Deployment
 ```bash
-gcloud run deploy propensity-analysis-app \
-  --source . \
+# Backend
+gcloud run deploy lamaimg \
+  --source ./Backend \
   --platform managed \
   --region europe-west4 \
   --allow-unauthenticated \
-  --port 80 \
+  --port 8080 \
   --memory 2Gi \
   --cpu 2 \
   --timeout 300 \
   --set-env-vars="
     PHOENIX_ENABLED=true,
-    PHOENIX_COLLECTOR_ENDPOINT=https://phoenix-service-538068578089.europe-west4.run.app,
+    PHOENIX_COLLECTOR_ENDPOINT=,
     PHOENIX_PROJECT_NAME=propensity-analysis,
     OPENAI_API_KEY=your_key,
     TAVILY_API_KEY=your_key
   "
+
+# Frontend
+gcloud run deploy propensity-analysis-frontend \
+  --source ./Frontend \
+  --platform managed \
+  --region europe-west4 \
+  --allow-unauthenticated \
+  --port 8080 \
+  --memory 512Mi \
+  --cpu 1 \
+  --timeout 300
 ```
 
-### Local Development
-1. Build and push Docker image to GCR
+### Production Setup
+1. Build and push Docker images to Artifact Registry
 2. Deploy with proper environment variables
 3. Configure custom domain (optional)
 4. Set up monitoring and alerting
+5. Configure Phoenix tracing for observability
 
 ### Other Platforms
 - **AWS ECS/Fargate**: Use the Dockerfile directly
@@ -379,7 +407,7 @@ gcloud run deploy propensity-analysis-app \
 ### Horizontal Scaling
 - Stateless backend design supports multiple instances
 - MongoDB can be scaled independently
-- Nginx load balancer can distribute traffic
+- Cloud Run auto-scaling handles traffic distribution
 
 ### Performance Optimization
 - Vector search caching
@@ -401,10 +429,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🆘 Support
 
 For support and questions:
-- Check the API documentation at `/docs`
 - Review the logs in the `logs/` directory
-- Test the health check endpoint
+- Test the health check endpoints
 - Verify environment variables are set correctly
+- Check Phoenix tracing
+## 📞 Contact
+
+For technical support or questions about this application, please contact the development team.
 
 ---
 

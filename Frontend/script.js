@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = window.location.origin; // Will work with same-origin deployment
+const API_BASE_URL = ''; // Deployed backend URL
 
 // DOM Elements
 const analysisForm = document.getElementById('analysisForm');
